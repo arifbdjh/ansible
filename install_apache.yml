@@ -1,16 +1,50 @@
 ---
-- hosts: all
+- hosts: centos
   tasks:
-    - name: install apache 
+    - name: install apache php 
       yum:
-        name: httpd 
+        name: 
+          - httpd 
+          - php
+      when: ansible_distribution in ["CentOS", "RedHat"]
 
-    - name: enable apache
+
+    - name: copy default html files
+      copy:
+        src: files/index.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: reload apache
       systemd:
         name: httpd
-        state: started
+        state: restarted
+      when: ansible_distribution in ["CentOS","RedHat"]
 
-    - name: stop firewall
+    - name: open firewall ports
+      ansible.posix.firewalld:
+                port: 80/tcp
+                permanent: true
+                state: enabled
+      when: ansible_distribution in ["CentOS","RedHat"]
+    
+    - name: restart firewalld 
       systemd: 
         name: firewalld
-        state: stopped
+        state: reloaded
+      when: ansible_distribution in ["CentOS","RedHat"]
+
+    - name: install unzip
+      package:
+        name: unzip
+
+    - name: install terraform
+      unarchive:
+        src: https://releases.hashicorp.com/terraform/1.9.5/terraform_1.9.5_linux_amd64.zip
+        dest: /usr/local/bin
+        remote_src: yes
+        mode: 0755
+        owner: root
+        group: root

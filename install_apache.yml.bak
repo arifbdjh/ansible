@@ -1,0 +1,34 @@
+---
+- hosts: allclients
+  tasks:
+    - name: install apache 
+      yum:
+        name: 
+          - httpd 
+          - php
+      when: ansible_distribution in ["CentOS", "RedHat"]
+
+    - name: enable apache
+      systemd:
+        name: httpd
+        state: reloaded
+      when: ansible_distribution in ["CentOS","RedHat"]
+
+    - name: firewall restart
+      systemd: 
+        name: firewalld
+        state: reloaded
+      when: ansible_distribution in ["CentOS","RedHat"]
+
+    - name: add firewall port
+      firewalld: 
+        port: 80/tcp
+        state: enabled
+        permanent: yes
+      when: ansible_distribution in ["CentOS","RedHat"]
+
+    - name: install apache2
+      apt:
+        name: apache2
+        state: latest
+      when: ansible_distribution in ["Ubuntu","Debian"]
