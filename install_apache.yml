@@ -1,6 +1,28 @@
 ---
 - hosts: centos
   tasks:
+    - name: create user arif
+      tags: always
+      user:
+        name: arif
+        groups: arif
+          
+    - name: add ssh key for arif
+      tags: always
+      authorized_key:
+        user: arif
+        key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPI7tfuJRFX3TRxHTHkxhkoaHrwul+RslbQxWVbPrbj3mKGhpRpBNLFyqMvetE0INgqR52h5mNGyTaqxgruYuxxc3bBJQ5d2OcxTO6pdKjzWgOI/q+kf74pDmtQjOei27crtUqUlBezaef4pNtLRJ37tgnz9AThPe7Ny0sVwiWDfuKu6kjimN9RWp8ono4HH6aXRV8u2lhLSA/uVyI/iwdWj2rHCfglE4U7R3eYku2/YHFCgcxAxjcTFsdnlKj2zwo9Ki5LhSpKhtT7LUJiEgGEpkAVUu4vQZDbkzXckiaPU0CTO1sGKSrUgKZyhmcszlLuyOCpQV8HuiXnVNqJSA7"
+
+    - name: add sudoers file for arif
+      tags: always
+      copy:
+        src: sudoer_arif
+        dest: /etc/sudoers.d/arif
+        owner: root
+        group: root
+        mode: 0440  
+
+
     - name: install apache php 
       yum:
         name: 
@@ -17,11 +39,20 @@
         group: root
         mode: 0644
 
+    - name: change e-mail address for admin
+      tags: httpd,centos
+      lineinfile: 
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^ServerAdmin'
+        line: ServerAdmin arifbdjh@gmail.com
+      when: ansible_distribution in ["CentOS", "RedHat"]
+      register: pizza
+
     - name: reload apache
       systemd:
         name: httpd
         state: restarted
-      when: ansible_distribution in ["CentOS","RedHat"]
+      when: pizza.changed 
 
     - name: open firewall ports
       ansible.posix.firewalld:
